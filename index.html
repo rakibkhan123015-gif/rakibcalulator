@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Responsive Calculator with Currency Converter</title>
+  <style>
+    :root{
+      --bg:#0e0f12;
+      --panel:#131417;
+      --accent:#00d4ff;
+      --muted:#9aa3ad;
+      --btn:#1b1d21;
+      --btn-hover:#26282d;
+      --danger:#ff6b6b;
+      --glass: rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,system-ui,-apple-system, sans-serif;background:linear-gradient(180deg,#071021 0%, #0b0c10 100%);color:#fff}
+
+    .container{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      padding:24px;
+      gap:24px;
+    }
+
+    .calculator{
+      width:100%;
+      max-width:420px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 10px 30px rgba(2,8,23,0.7), inset 0 1px 0 rgba(255,255,255,0.02);
+      backdrop-filter: blur(6px);
+    }
+
+    .display{
+      background:var(--glass);
+      border-radius:12px;
+      padding:18px;
+      min-height:88px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:flex-end;
+      gap:6px;
+      word-break:break-all;
+    }
+
+    .small{color:var(--muted);font-size:14px;opacity:0.9}
+    .big{font-size:32px;font-weight:600}
+
+    .btn-grid{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: repeat(4,1fr);
+      gap:10px;
+    }
+
+    button.key{
+      height:64px;
+      border-radius:10px;
+      background:var(--btn);
+      border:1px solid rgba(255,255,255,0.03);
+      font-size:20px;
+      color:#fff;
+      box-shadow: 0 4px 8px rgba(2,8,23,0.6);
+      transition:transform .08s ease, background .08s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button.key:active{transform:translateY(2px)}
+    button.key:hover{background:var(--btn-hover)}
+
+    .operator{background:linear-gradient(180deg, rgba(0,212,255,0.12), rgba(0,212,255,0.08)); color:var(--accent); border:1px solid rgba(0,212,255,0.06);}
+    .wide{grid-column: span 2}
+    .danger{background:linear-gradient(180deg, rgba(255,107,107,0.12), rgba(255,107,107,0.06)); color:var(--danger); border:1px solid rgba(255,107,107,0.06)}
+
+    /* Responsive tweaks */
+    @media (max-width:420px){
+      .calculator{padding:14px;border-radius:16px}
+      .display{padding:12px;min-height:78px}
+      .big{font-size:28px}
+      button.key{height:58px;font-size:18px}
+    }
+
+    /* Accessibility focus */
+    button.key:focus{outline:3px solid rgba(0,212,255,0.12)}
+
+    footer.note{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
+
+    .converter{
+      max-width:420px;
+      width:100%;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 10px 30px rgba(2,8,23,0.7), inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+
+    .converter input, .converter select, .converter button{
+      width:100%;
+      padding:10px;
+      margin-top:8px;
+      border-radius:8px;
+      border:none;
+      font-size:16px;
+    }
+
+    .converter button{
+      background:var(--btn);
+      color:#fff;
+      cursor:pointer;
+    }
+    .converter button:hover{background:var(--btn-hover)}
+
+    .rates{
+      margin-top:12px;
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    .rakib-btn{
+      position:fixed;
+      bottom:16px;
+      right:16px;
+      background:var(--accent);
+      color:#000;
+      border:none;
+      padding:12px 18px;
+      border-radius:50px;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow:0 6px 18px rgba(0,212,255,0.4);
+      transition:transform 0.2s;
+    }
+    .rakib-btn:hover{transform:scale(1.05)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="calculator" role="application" aria-label="Calculator">
+      <div class="display" id="display">
+        <div class="small" id="history">&nbsp;</div>
+        <div class="big" id="result">0</div>
+      </div>
+
+      <div class="btn-grid" role="group" aria-label="Calculator buttons">
+        <button class="key danger" data-action="clear" aria-label="Clear">C</button>
+        <button class="key" data-action="back" aria-label="Backspace">⌫</button>
+        <button class="key" data-action="percent" aria-label="Percent">%</button>
+        <button class="key operator" data-value="/" aria-label="Divide">÷</button>
+
+        <button class="key" data-value="7">7</button>
+        <button class="key" data-value="8">8</button>
+        <button class="key" data-value="9">9</button>
+        <button class="key operator" data-value="*" aria-label="Multiply">×</button>
+
+        <button class="key" data-value="4">4</button>
+        <button class="key" data-value="5">5</button>
+        <button class="key" data-value="6">6</button>
+        <button class="key operator" data-value="-" aria-label="Minus">−</button>
+
+        <button class="key" data-value="1">1</button>
+        <button class="key" data-value="2">2</button>
+        <button class="key" data-value="3">3</button>
+        <button class="key operator" data-value="+" aria-label="Plus">+</button>
+
+        <button class="key wide" data-value="0" style="text-align:left;padding-left:22px">0</button>
+        <button class="key" data-value="." aria-label="Decimal point">.</button>
+        <button class="key operator" data-action="equals" aria-label="Equals">=</button>
+      </div>
+
+      <footer class="note">Tap keys or use your device keyboard. Supports basic parentheses and decimal.</footer>
+    </div>
+
+    <!-- Currency Converter -->
+    <div class="converter">
+      <h3>Currency Converter</h3>
+      <input type="number" id="amount" placeholder="Enter amount" />
+      <select id="from">
+        <option value="USD">USD - US Dollar</option>
+        <option value="EUR">EUR - Euro</option>
+        <option value="BDT">BDT - Bangladeshi Taka</option>
+        <option value="INR">INR - Indian Rupee</option>
+      </select>
+      <select id="to">
+        <option value="USD">USD - US Dollar</option>
+        <option value="EUR">EUR - Euro</option>
+        <option value="BDT">BDT - Bangladeshi Taka</option>
+        <option value="INR">INR - Indian Rupee</option>
+      </select>
+      <button id="convert">Convert</button>
+      <button id="refresh">Refresh Rates</button>
+      <div id="output"></div>
+      <div class="rates" id="rates"></div>
+    </div>
+  </div>
+
+  <button class="rakib-btn">Rakib Corner</button>
+
+  <script>
+    (function(){
+      const display = document.getElementById('result');
+      const history = document.getElementById('history');
+      let expr = '';
+
+      function updateScreen(){
+        display.textContent = expr === '' ? '0' : expr;
+        history.textContent = expr.length>24 ? expr.slice(0,24)+'…' : '\u00A0';
+      }
+
+      function safeEval(s){
+        if(!/^[0-9+\-*/().%\s]*$/.test(s)) throw new Error('Invalid characters');
+        s = s.replace(/(\d+(?:\.\d+)?)%/g,'($1/100)');
+        s = s.replace(/×/g,'*').replace(/÷/g,'/');
+        if(s.length>200) throw new Error('Expression too long');
+        const fn = new Function('return ('+s+')');
+        return fn();
+      }
+
+      function press(value){
+        if(value === 'clear') { expr=''; updateScreen(); return }
+        if(value === 'back') { expr = expr.slice(0,-1); updateScreen(); return }
+        if(value === 'equals'){
+          try{
+            const res = safeEval(expr);
+            expr = String(res);
+            updateScreen();
+          }catch(e){ display.textContent = 'Error'; }
+          return;
+        }
+        if(value === 'percent'){
+          expr += '%'; updateScreen(); return;
+        }
+        expr += value;
+        updateScreen();
+      }
+
+      document.querySelectorAll('button.key').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const v = btn.getAttribute('data-value');
+          const a = btn.getAttribute('data-action');
+          if(a) press(a); else press(v);
+        });
+      });
+
+      window.addEventListener('keydown', (e)=>{
+        if(e.metaKey || e.ctrlKey) return;
+        const key = e.key;
+        if(/^[0-9]$/.test(key)) { press(key); e.preventDefault(); return }
+        if(key === 'Enter' || key === '=') { press('equals'); e.preventDefault(); return }
+        if(key === 'Backspace') { press('back'); e.preventDefault(); return }
+        if(key === 'Escape') { press('clear'); e.preventDefault(); return }
+        if(key === '.') { press('.'); e.preventDefault(); return }
+        if(key === '+'||key === '-'||key === '/'||key === '*') { press(key); e.preventDefault(); return }
+        if(key === '%') { press('percent'); e.preventDefault(); return }
+        if(key === '('||key === ')') { press(key); e.preventDefault(); return }
+      });
+
+      function tuneForScreen(){
+        const w = window.innerWidth;
+        const keys = document.querySelectorAll('button.key');
+        if(w < 360){ keys.forEach(k=>k.style.height='56px'); }
+      }
+      window.addEventListener('resize', tuneForScreen);
+      tuneForScreen();
+      updateScreen();
+    })();
+
+    // Currency Converter Logic
+    (function(){
+      let rates = {};
+      const amount = document.getElementById('amount');
+      const from = document.getElementById('from');
+      const to = document.getElementById('to');
+      const output = document.getElementById('output');
+      const refresh = document.getElementById('refresh');
+      const convert = document.getElementById('convert');
+      const ratesBox = document.getElementById('rates');
+
+      async function fetchRates(){
+        try{
+          const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+          const data = await res.json();
+          rates = data.rates;
+          showRates();
+        }catch(e){
+          ratesBox.textContent = 'Error fetching rates';
+        }
+      }
+
+      function showRates(){
+        if(!rates) return;
+        let text = 'Latest Rates (base USD):';
+        ['EUR','BDT','INR'].forEach(cur=>{
+          if(rates[cur]) text += `\n1 USD = ${rates[cur]} ${cur}`;
+        });
+        ratesBox.textContent = text;
+      }
+
+      convert.addEventListener('click', ()=>{
+        const amt = parseFloat(amount.value);
+        if(isNaN(amt)) { output.textContent = 'Enter a valid amount'; return; }
+        if(!rates[from.value] || !rates[to.value]) { output.textContent = 'Rates not loaded'; return; }
+        const usd = amt / rates[from.value];
+        const converted = usd * rates[to.value];
+        output.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
+      });
+
+      refresh.addEventListener('click', fetchRates);
+      fetchRates();
+    })();
+  </script>
+</body>
+</html>
